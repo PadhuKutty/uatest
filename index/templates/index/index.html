@@ -1,0 +1,95 @@
+{% extends 'index/layout.html' %}
+{% load static %}
+
+{% block title %}
+    {{ form.title }}'s response ~ UA Test
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'index/index.js' %}" defer></script>
+<script src="{% static 'lib/cookie.min.js' %}" defer></script>
+{% endblock %}
+
+{% block body %}
+{% if request.user.is_superuser %}
+<div class="container-fluid">
+    <div class="topnav nav-effect">
+        <div class="nav-padding">
+            <span class="nav-ham" id="nav-ham">&#9776;</span>
+            <img src="{% static 'Icon/icon2.png' %}" alt="Google Forms Icon(CLONE)" class="navbar-icon form-icon" title="Forms">
+            <span class="nav-text" title="Forms"><a href="{% url 'index' %}" class="nav-link">Test</a></span>
+            <a href="{% url 'logout' %}">
+                <img src="{% static 'Icon/Logout.jpg' %}" alt="Logout Icon" class="navbar-icon float-right logout-icon" title="Logout">
+            </a>
+        </div>
+    </div>
+    <div class="sidebar" id="sidebar">
+        <span class="close-sidebar" id="close-sidebar">&times;</span>
+        <div class="sidebar-content">
+            <h4 class="sidebar-title">
+                <a href="{% url 'index' %}" class="sidebar-title-link">
+                    <span>UA Development Test</span>
+                </a>
+            </h4>
+            <!-- Register link -->
+            <a class="link" href="{% url 'register' %}">Register</a>
+        </div>
+    </div>
+    <div class="create-form">
+        <div class="container">
+            <p class="forms-label">Create a new test</p>
+            <div class="form-template-box">
+                <img src="{% static 'Icon/blank-form.png' %}" alt="Blank form" title="Blank form" id="create-blank-form">
+                <span class="form-template-label">Create Test</span>
+            </div>
+        </div>
+    </div>
+    <div class="container">
+        <div class="form-list">
+            <p class="forms-label">Your Tests:</p>
+            {% for i in forms %}
+            <a href="{% url 'edit_form' i.code %}" class="form-list-link">
+                <div class="form-box">
+                    <div class="form-list-title"><h5 class="form-list-title-text">{{ i.title }}</h5></div>
+                    {% if i.createdAt == i.updatedAt %}
+                    <p class="form-list-timestamp">{{ i.createdAt }}</p>
+                    {% else %}
+                    <p class="form-list-timestamp">{{ i.updatedAt }}</p>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="container" style="text-align: center; background-color: #ffffff; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); padding: 20px; max-width: 600px; margin: 20px auto;">
+    <h1 class="message" style="color: #333333;">Welcome to User Assistance Test</h1><br>
+    <h3 class="message" style="color: #333333;">Instructions:</h3>
+    <ul style="list-style-type: disc; padding-left: 20px; color: #333333; text-align: left;">
+        <li>Duration of the test is 75 minutes</li>
+        <li>This test consists of five sections. Attempt all of them</li>
+        <ul style="list-style-type: disc; padding-left: 20px; color: #333333; text-align: left;">
+            <li>Questions 1-15 : 1 Mark each</li>
+            <li>Question 16 : 5 Marks</li>
+            <li>Question 17-19 : 10 Marks each</li>
+        </ul>
+        <li>If you are a fresher, Enter 0 for the years of experience</li>
+    </ul>
+    {% if request.user.is_authenticated %}
+    <form id="experience-form" method="post" action="{% url 'start_test' %}" style="text-align: center;">
+        {% csrf_token %}
+        <div style="display: flex; flex-direction: column; align-items: center; max-width: 400px; margin: auto;">
+            <div style="margin-bottom: 15px; width: 100%;">
+                <label for="experience" style="display: block; color: #333333; margin-bottom: 5px;">Enter your years of experience:</label>
+                <input type="number" id="experience" name="experience" min="0" required style="width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ccc;">
+            </div>
+            <button type="submit" class="start-test-button" style="display: inline-block; background-color: #4CAF50; color: white; text-decoration: none; padding: 10px 20px; border-radius: 5px; margin-top: 10px; transition: background-color 0.3s; border: none; cursor: pointer;">Start Test</button>
+        </div>
+    </form>
+    
+    {% endif %}
+</div>
+
+{% endif %}
+{% endblock %}

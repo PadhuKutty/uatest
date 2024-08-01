@@ -1,0 +1,75 @@
+{% extends 'index/layout.html' %}
+{% block body %}
+<style>
+    /* Move styles to your main CSS file for better organization */
+    .container {
+        max-width: 400px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+    .form-group {
+        margin-bottom: 20px;
+    }
+    .input-animate {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        transition: border-color 0.3s ease-in-out;
+    }
+    .input-animate:focus {
+        border-color: #66afe9;
+        outline: none;
+    }
+    .btn {
+        width: 100%;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        background-color: #343a40; /* Dark background color */
+        color: #ffffff;
+        cursor: pointer;
+        transition: background-color 0.3s ease-in-out;
+    }
+    .btn:hover {
+        background-color: #23272b; /* Darker hover background color */
+    }
+</style>
+
+<div class="container">
+    <form action="{% url 'register' %}" method="post" class="box box-shadow margin-top-bottom">
+        <div class="form-group">
+            <h1 class="box-title">Register user</h1>
+            <p class="form-error">{{ message }}</p>
+            {% csrf_token %}
+        </div>
+        <div class="form-group form-animate">
+            <p class="form-label">Username:</p>
+            <input type="text" class="form-control input-animate" name="username" required>
+            <span class="input-onFocus"></span>
+        </div>
+        <div class="form-group form-animate">
+            <p class="form-label">Email:</p>
+            <input type="email" name="email" class="form-control input-animate" required>
+            <span class="input-onFocus"></span>
+        </div>
+        <div class="form-group form-animate">
+            <p class="form-label">Password:</p>
+            <input type="password" name="password" class="form-control input-animate" required>
+            <span class="input-onFocus"></span>
+        </div>
+        <div class="form-group form-animate">
+            <p class="form-label">Password Confirmation:</p>
+            <input type="password" name="confirmation" class="form-control input-animate" required>
+            <span class="input-onFocus"></span>
+        </div>
+        <div class="form-group">
+            <p class="form-label">Already have an account? <a class="link" href="{% url 'login' %}">Login</a></p>
+            <input type="submit" value="Register" class="btn form-control">
+        </div>
+    </form>
+</div>
+{% endblock %}

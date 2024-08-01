@@ -1,0 +1,151 @@
+{% extends 'index/layout.html' %}
+{% load static %}
+{% load get_response %}
+{% load to_int %}
+{% load is_response %}
+{% load score %}
+{% block script %}
+<script src="{% static 'index/response.js' %}"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get reference to the text areas
+    var shortAnswerElements = document.querySelectorAll('.short-answer');
+    var longAnswerElements = document.querySelectorAll('.long-answer');
+
+    // Add event listeners for paste events
+    shortAnswerElements.forEach(function(element) {
+        element.addEventListener('paste', function(e) {
+            handlePasteEvent(e, element);
+        });
+    });
+
+    longAnswerElements.forEach(function(element) {
+        element.addEventListener('paste', function(e) {
+            handlePasteEvent(e, element);
+        });
+    });
+});
+
+function handlePasteEvent(event, element) {
+    // Prevent the default paste action
+    event.preventDefault();
+
+    // Get the text that is being pasted
+    var clipboardData = event.clipboardData || window.clipboardData;
+    var pastedText = clipboardData.getData('Text');
+
+    // Check if the pasted text originates from the same page
+    if (pastedText && isTextFromSamePage(pastedText)) {
+        // Paste the text into the element
+        var currentValue = element.textContent || element.innerText || '';
+        var cursorPosition = getCaretPosition(element);
+        var newValue = currentValue.slice(0, cursorPosition) + pastedText + currentValue.slice(cursorPosition);
+        element.textContent = newValue;
+
+        // Optionally, you can also clear the clipboard after pasting
+        clipboardData.clearData();
+    } else {
+        // Clear the clipboard to prevent unauthorized paste
+        clipboardData.clearData();
+    }
+}
+
+function isTextFromSamePage(pastedText) {
+    // Example: Check if the pasted text contains a part of the current URL
+    var currentUrl = window.location.href;
+    return pastedText.indexOf(currentUrl) !== -1;
+}
+
+function getCaretPosition(element) {
+    var caretOffset = 0;
+    var doc = element.ownerDocument || element.document;
+    var win = doc.defaultView || doc.parentWindow;
+    var sel;
+    if (typeof win.getSelection != 'undefined') {
+        sel = win.getSelection();
+        if (sel.rangeCount > 0) {
+            var range = win.getSelection().getRangeAt(0);
+            var preCaretRange = range.cloneRange();
+            preCaretRange.selectNodeContents(element);
+            preCaretRange.setEnd(range.endContainer, range.endOffset);
+            caretOffset = preCaretRange.toString().length;
+        }
+    } else if ((sel = doc.selection) && sel.type != 'Control') {
+        var textRange = sel.createRange();
+        var preCaretTextRange = doc.body.createTextRange();
+        preCaretTextRange.moveToElementText(element);
+        preCaretTextRange.setEndPoint('EndToEnd', textRange);
+        caretOffset = preCaretTextRange.text.length;
+    }
+    return caretOffset;
+}
+</script>
+{% endblock %}
+{% block body %}
+<div class="container-fluid">
+    <div class="container">
+        <span id="bg-color" style="display: none;">{{form.background_color}}</span>
+        <span id="text-color" style="display: none;">{{form.text_color}}</span>
+        <div class="margin-top-bottom box question-box">
+            <div class="form-title-box">
+                <h1 class="form-title txtClr">{{form.title}}</h1>
+                {% if form.is_quiz %}
+                <h4 class="score-title">Score: {{score}} / {{total_score}}</h4>
+                {% endif %}
+                <p class="required-info">* Required</p>
+            </div>
+            <div class="form-description txtClr">{{form.description|linebreaksbr}}</div>
+        </div>
+        {% if form.collect_email %}
+        <div class="margin-top-bottom box question-box">
+            <h1 class="question-title txtClr">Email address: <span class="require-star">*</span></h1>
+            <p class="short-answer">{{response.responder_email|safe}}</p>  <!-- Use |safe filter to display raw HTML -->
+        </div>
+        {% endif %}
+        {% for question in form.questions.all|dictsort:"id" %}
+        <div class="margin-top-bottom box question-box">
+            <h1 class="response-title txtClr">{{question.question}} {% if question.required %}<span class="require-star">*</span>{% endif %}
+            {% if form.is_quiz %}<span class="float-right">{{response|score:question.pk}} / {{question.score}}</span>{% endif %}</h1>
+            {% if question.question_type == "short" %}
+                <p class="short-answer">{{response|get_response:question.pk|safe}}</p>  <!-- Use |safe filter to display raw HTML -->
+            {% elif question.question_type == "paragraph" %}
+                <p class="long-answer">{{response|get_response:question.pk|safe}}</p>  <!-- Use |safe filter to display raw HTML -->
+            {% elif question.question_type == "multiple choice" %}
+                {% for choice in question.choices.all %}
+                <div class="multiple-choice">
+                    {% if response|get_response:question.pk|to_int == choice.pk|to_int %}
+                        <input type="radio" name="{{question.id}}" id="{{choice.id}}" checked>
+                    {% else %}
+                        <input type="radio" name="{{question.id}}" id="{{choice.id}}" disabled>
+                    {% endif %}
+                    <label for="{{choice.id}}" class="txtClr">{{choice.choice}}</label>
+                </div>
+                {% endfor %}
+            {% elif question.question_type == "checkbox" %}
+                {% for choice in question.choices.all %}
+                <div class="multiple-choice">
+                    {% if response|get_response:question.pk|is_response:choice.pk %}
+                        <input type="checkbox" name="{{question.id}}" id="{{choice.id}}" value="{{choice.id}}" checked onclick="return false">
+                    {% else %}
+                        <input type="checkbox" name="{{question.id}}" id="{{choice.id}}" value="{{choice.id}}" disabled>
+                    {% endif %}
+                    <label for="{{choice.id}}" class="txtClr">{{choice.choice}}</label>
+                </div>
+                {% endfor %}
+            {% endif %}
+            {% if user != form.creator and question.feedback != None and question.feedback != "" %}
+                <div class="feedback">
+                    <h5 class="feedback-title">Feedback:</h5>
+                    <p class="text-label long-answer">{{question.feedback|linebreaksbr|urlize}}</p>
+                </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% if user == form.creator %}
+        <a href="{% url 'edit_form' form.code %}">
+            <img src="{% static 'Icon/question.png' %}" alt="Edit Question" title="Edit this form" class="edit-form-link">
+        </a>
+    {% endif %}
+</div>
+{% endblock %}
