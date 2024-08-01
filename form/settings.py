@@ -31,7 +31,7 @@ import socket
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 
-ALLOWED_HOSTS = ['.vercel.app']
+ALLOWED_HOSTS = ['uatest1.vercel.app']
 s.close()
 
 
