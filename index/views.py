@@ -640,7 +640,7 @@ def submit_form(request, code):
             "form": formInfo,
             "code": code
         })
-
+    request.session.flush()
     # Render the form if it's a GET request
     return render(request, "index/your_form_template.html", {
         "form": formInfo
