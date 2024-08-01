@@ -21,17 +21,17 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = '4fec20016a8d42839790db394227e143'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get("DEBUG" , "False").lower() == "true"
+DEBUG = True
 
 import socket
 
 s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 80))
 
-ALLOWED_HOSTS = ['ua-9fdi.onrender.com']
+ALLOWED_HOSTS = ['.vercel.app']
 s.close()
 
 
