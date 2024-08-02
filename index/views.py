@@ -777,6 +777,7 @@ def response(request, code, response_code):
                         if k.is_answer and k.pk not in answer_keys: answer_keys.append(k.pk)
                     _temp.append(i.answer_to.pk)
                 if answers == answer_keys: score += i.answer_to.score
+    request.session.flush()
     return render(request, "index/response.html", {
         "form": formInfo,
         "response": responseInfo,
