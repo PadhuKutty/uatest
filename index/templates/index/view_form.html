@@ -29,7 +29,7 @@
         }
     } else {
         deadline = new Date();
-        deadline.setMinutes(deadline.getMinutes() + 75);
+        deadline.setMinutes(deadline.getMinutes() + 3);
         localStorage.setItem(timerKey, deadline.toISOString());
     }
 
@@ -48,7 +48,7 @@
         localStorage.setItem(timerKey, deadline.toISOString()); // Update timer in localStorage
 
         // Alert user when only 15 minutes are left
-        if (timeLeft <= 15 * 60 && !localStorage.getItem('alerted_15_minutes')) {
+        if (timeLeft <= 2 * 60 && !localStorage.getItem('alerted_15_minutes')) {
             alert("You have only 15 minutes left to complete the form!");
             localStorage.setItem('alerted_15_minutes', 'true'); // Set flag to avoid multiple alerts
         }
