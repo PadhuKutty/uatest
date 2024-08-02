@@ -739,50 +739,55 @@ def exportcsv(request,code):
     return http_response
 
 def response(request, code, response_code):
-    formInfo = Form.objects.filter(code = code)
-    #Checking if form exists
-    if formInfo.count() == 0:
+    formInfo = Form.objects.filter(code=code).first()
+    if not formInfo:
         return HttpResponseRedirect(reverse('404'))
-    else: formInfo = formInfo[0]
-    #Checking if form creator is user
+    
     if not formInfo.allow_view_score:
         if formInfo.creator != request.user:
             return HttpResponseRedirect(reverse("403"))
+    
+    responseInfo = Responses.objects.filter(response_code=response_code).first()
+    if not responseInfo:
+        return HttpResponseRedirect(reverse('404'))
+
     total_score = 0
     score = 0
-    responseInfo = Responses.objects.filter(response_code = response_code)
-    if responseInfo.count() == 0:
-        return HttpResponseRedirect(reverse('404'))
-    else: responseInfo = responseInfo[0]
+    
     if formInfo.is_quiz:
-        for i in formInfo.questions.all():
-            total_score += i.score
-        for i in responseInfo.response.all():
-            if i.answer_to.question_type == "short" or i.answer_to.question_type == "paragraph":
-                if i.answer == i.answer_to.answer_key: score += i.answer_to.score
-            elif i.answer_to.question_type == "multiple choice":
-                answerKey = None
-                for j in i.answer_to.choices.all():
-                    if j.is_answer: answerKey = j.id
-                if answerKey is not None and int(answerKey) == int(i.answer):
-                    score += i.answer_to.score
-        _temp = []
-        for i in responseInfo.response.all():
-            if i.answer_to.question_type == "checkbox" and i.answer_to.pk not in _temp:
-                answers = []
-                answer_keys = []
-                for j in responseInfo.response.filter(answer_to__pk = i.answer_to.pk):
-                    answers.append(int(j.answer))
-                    for k in j.answer_to.choices.all():
-                        if k.is_answer and k.pk not in answer_keys: answer_keys.append(k.pk)
-                    _temp.append(i.answer_to.pk)
-                if answers == answer_keys: score += i.answer_to.score
+        for question in formInfo.questions.all():
+            total_score += question.score
+        
+        for answer in responseInfo.response.all():
+            try:
+                question = answer.answer_to
+                if question.question_type in ["short", "paragraph"]:
+                    if answer.answer == question.answer_key:
+                        score += question.score
+                elif question.question_type == "multiple choice":
+                    correct_answer_id = next(
+                        (choice.id for choice in question.choices.all() if choice.is_answer), 
+                        None
+                    )
+                    if correct_answer_id and int(correct_answer_id) == int(answer.answer):
+                        score += question.score
+                elif question.question_type == "checkbox":
+                    if answer.answer_to.pk not in _temp:
+                        answers = [int(a.answer) for a in responseInfo.response.filter(answer_to__pk=question.pk)]
+                        correct_answers = [choice.pk for choice in question.choices.all() if choice.is_answer]
+                        if sorted(answers) == sorted(correct_answers):
+                            score += question.score
+                        _temp.append(question.pk)
+            except Questions.DoesNotExist:
+                continue
+
     return render(request, "index/response.html", {
         "form": formInfo,
         "response": responseInfo,
         "score": score,
         "total_score": total_score
     })
+
 
 def edit_response(request, code, response_code):
     formInfo = Form.objects.filter(code = code)
